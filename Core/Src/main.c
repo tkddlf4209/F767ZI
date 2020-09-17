@@ -64,7 +64,8 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  22;
+#define DEVICEID  32;
+#define FAN_ON_TEMP 35
 
 //#define LORA  1
 //#define UDP  1
@@ -86,6 +87,7 @@ struct lora_packet_t {
 #define GRAVITY_EARTH      (9.80665f)
 #define VIBR_LIMIT      (1.0f)
 #define DIFF_ABS(X,Y) ((X)>(Y)?(X)-(Y):(Y)-(X))
+
 
 //8000
 /* USER CODE END PD */
@@ -318,28 +320,6 @@ void collectionTask(void const *argument) {
 		vocs = formaldehyde;
 		// ---------------------- END ADC ----------------------
 
-		// ---------------------- START GPIO ----------------------
-		printf("========== GPIO ==========\r\n");
-
-		// get Fire extinguisher status
-		// 0 ->1 : GAS EMPTY , 1 -> 0 : WORKING or NOT CONNECT
-
-		fext_no = HAL_GPIO_ReadPin(GPIOG, FEXT_NO_Pin); // FEXT EMPTY
-		fext_nc = HAL_GPIO_ReadPin(GPIOG, FEXT_NC_Pin); // FEXT NOT CONNECTED
-		fire0 = HAL_GPIO_ReadPin(GPIOD, FIRE0_Pin); // temp up
-		fire1 = HAL_GPIO_ReadPin(GPIOD, FIRE1_Pin); // fire up
-
-		fext_stat = fext_no << 1 | fext_nc;
-		fire = fire0 << 1 | fire1;
-
-		printf("fext_stat : %d \r\n", fext_stat);
-		printf("fire : %d \r\n", fire);
-
-		fan_stat = HAL_GPIO_ReadPin(GPIOG, FAN_Pin);
-		printf("fan_stat : %d\r\n", fan_stat);
-
-		// ---------------------- END GPIO ----------------------
-
 		// ---------------------- START I2C ----------------------
 		printf("========== I2C ==========\r\n");
 
@@ -376,6 +356,36 @@ void collectionTask(void const *argument) {
 				printf("temp : %f\r\n", temp);
 			}
 		}
+
+		// ---------------------- START GPIO ----------------------
+		printf("========== GPIO ==========\r\n");
+
+		// get Fire extinguisher status
+		// 0 ->1 : GAS EMPTY , 1 -> 0 : WORKING or NOT CONNECT
+
+		fext_no = HAL_GPIO_ReadPin(GPIOG, FEXT_NO_Pin); // FEXT EMPTY
+		fext_nc = HAL_GPIO_ReadPin(GPIOG, FEXT_NC_Pin); // FEXT NOT CONNECTED
+		fire0 = HAL_GPIO_ReadPin(GPIOD, FIRE0_Pin); // temp up
+		fire1 = HAL_GPIO_ReadPin(GPIOD, FIRE1_Pin); // fire up
+
+		fext_stat = fext_no << 1 | fext_nc;
+		fire = fire0 << 1 | fire1;
+
+		printf("fext_stat : %d \r\n", fext_stat);
+		printf("fire : %d \r\n", fire);
+
+		fan_stat = HAL_GPIO_ReadPin(GPIOG, FAN_Pin);
+		printf("fan_stat : %d\r\n", fan_stat);
+
+
+		// control fan
+		if(temp >= FAN_ON_TEMP && fan_stat == 0){
+			HAL_GPIO_WritePin(GPIOG, FAN_Pin ,GPIO_PIN_SET);
+		}else if(temp < FAN_ON_TEMP && fan_stat == 1){
+			HAL_GPIO_WritePin(GPIOG, FAN_Pin ,GPIO_PIN_RESET);
+		}
+
+		// ---------------------- END GPIO ----------------------
 		/* Read the accel x, y, z data */
 //		if (bma_init) {
 //			rslt = bma4_read_accel_xyz(&sens_data, &bma);
@@ -1755,8 +1765,8 @@ void StartDefaultTask(void const *argument) {
 	MX_LWIP_Init();
 	/* USER CODE BEGIN 5 */
 
-
-	device_id = DEVICEID;
+	device_id = DEVICEID
+	;
 	// init status led blink start
 	osThreadDef(led_blink_task, startLedBlinkTask, osPriorityNormal, 0,
 			configMINIMAL_STACK_SIZE);
