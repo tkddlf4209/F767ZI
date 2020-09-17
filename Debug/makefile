@@ -16,6 +16,24 @@ RM := rm -rf
 -include Middlewares/Third_Party/LwIP/src/core/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/apps/mqtt/subdir.mk
 -include Middlewares/Third_Party/LwIP/src/api/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/system/OS/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/netif/ppp/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/netif/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/core/ipv6/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/core/ipv4/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/core/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/apps/mqtt/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/LwIP/src/api/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/LWIP/Target/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/LWIP/App/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Drivers/STM32F7xx_HAL_Driver/Src/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Core/Startup/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/Core/Src/subdir.mk
+-include Middlewares/Third_Party/LwIP/Debug/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/subdir.mk
@@ -25,6 +43,7 @@ RM := rm -rf
 -include Drivers/STM32F7xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
+-include Core/Inc/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -55,7 +74,7 @@ all: F767ZI.elf secondary-outputs
 
 # Tool invocations
 F767ZI.elf: $(OBJS) $(USER_OBJS) C:\Users\q\Desktop\cube_workspace\F767ZI\STM32F767ZITX_FLASH.ld
-	arm-none-eabi-gcc -o "F767ZI.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\q\Desktop\cube_workspace\F767ZI\STM32F767ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="F767ZI.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "F767ZI.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\q\Desktop\cube_workspace\F767ZI\STM32F767ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="F767ZI.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

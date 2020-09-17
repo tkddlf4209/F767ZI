@@ -1,0 +1,9 @@
+bma4_common.c:23:8:user_i2c_init	4	static
+bma4_common.c:32:8:user_spi_init	4	static
+bma4_common.c:41:8:user_spi_read	24	static
+bma4_common.c:51:8:user_i2c_read	40	static
+bma4_common.c:73:8:user_spi_write	24	static
+bma4_common.c:83:8:user_i2c_write	56	dynamic
+bma4_common.c:101:6:user_delay	16	static
+bma4_common.c:109:8:bma4_interface_selection	24	static
+bma4_common.c:160:6:bma4_error_codes_print_result	16	static

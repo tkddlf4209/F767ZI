@@ -1,22 +1,22 @@
 /**
  ******************************************************************************
-  * File Name          : LWIP.c
-  * Description        : This file provides initialization code for LWIP
-  *                      middleWare.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
-  
+ * File Name          : LWIP.c
+ * Description        : This file provides initialization code for LWIP
+ *                      middleWare.
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under Ultimate Liberty license
+ * SLA0044, the "License"; You may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at:
+ *                             www.st.com/SLA0044
+ *
+ ******************************************************************************
+ */
+
 /* Includes ------------------------------------------------------------------*/
 #include "lwip.h"
 #include "lwip/init.h"
@@ -50,52 +50,52 @@ uint8_t GATEWAY_ADDRESS[4];
 /* USER CODE END 2 */
 
 /**
-  * LwIP initialization function
-  */
-void MX_LWIP_Init(void)
-{
-  /* IP addresses initialization */
-  IP_ADDRESS[0] = 192;
-  IP_ADDRESS[1] = 168;
-  IP_ADDRESS[2] = 1;
-  IP_ADDRESS[3] = 153;
-  NETMASK_ADDRESS[0] = 255;
-  NETMASK_ADDRESS[1] = 255;
-  NETMASK_ADDRESS[2] = 255;
-  NETMASK_ADDRESS[3] = 0;
-  GATEWAY_ADDRESS[0] = 192;
-  GATEWAY_ADDRESS[1] = 168;
-  GATEWAY_ADDRESS[2] = 1;
-  GATEWAY_ADDRESS[3] = 1;
-  
-  /* Initilialize the LwIP stack with RTOS */
-  tcpip_init( NULL, NULL );
+ * LwIP initialization function
+ */
+void MX_LWIP_Init(void) {
+	/* IP addresses initialization */
+	IP_ADDRESS[0] = 192;
+	IP_ADDRESS[1] = 168;
+	IP_ADDRESS[2] = 1;
+	IP_ADDRESS[3] = 105;
+	NETMASK_ADDRESS[0] = 255;
+	NETMASK_ADDRESS[1] = 255;
+	NETMASK_ADDRESS[2] = 255;
+	NETMASK_ADDRESS[3] = 0;
+	GATEWAY_ADDRESS[0] = 192;
+	GATEWAY_ADDRESS[1] = 168;
+	GATEWAY_ADDRESS[2] = 1;
+	GATEWAY_ADDRESS[3] = 137;
 
-  /* IP addresses initialization without DHCP (IPv4) */
-  IP4_ADDR(&ipaddr, IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
-  IP4_ADDR(&netmask, NETMASK_ADDRESS[0], NETMASK_ADDRESS[1] , NETMASK_ADDRESS[2], NETMASK_ADDRESS[3]);
-  IP4_ADDR(&gw, GATEWAY_ADDRESS[0], GATEWAY_ADDRESS[1], GATEWAY_ADDRESS[2], GATEWAY_ADDRESS[3]);
+	/* Initilialize the LwIP stack with RTOS */
+	tcpip_init( NULL, NULL);
 
-  /* add the network interface (IPv4/IPv6) with RTOS */
-  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+	/* IP addresses initialization without DHCP (IPv4) */
+	IP4_ADDR(&ipaddr, IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2],
+			IP_ADDRESS[3]);
+	IP4_ADDR(&netmask, NETMASK_ADDRESS[0], NETMASK_ADDRESS[1],
+			NETMASK_ADDRESS[2], NETMASK_ADDRESS[3]);
+	IP4_ADDR(&gw, GATEWAY_ADDRESS[0], GATEWAY_ADDRESS[1], GATEWAY_ADDRESS[2],
+			GATEWAY_ADDRESS[3]);
 
-  /* Registers the default network interface */
-  netif_set_default(&gnetif);
+	/* add the network interface (IPv4/IPv6) with RTOS */
+	netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init,
+			&tcpip_input);
 
-  if (netif_is_link_up(&gnetif))
-  {
-    /* When the netif is fully configured this function must be called */
-    netif_set_up(&gnetif);
-  }
-  else
-  {
-    /* When the netif link is down this function must be called */
-    netif_set_down(&gnetif);
-  }
+	/* Registers the default network interface */
+	netif_set_default(&gnetif);
 
-/* USER CODE BEGIN 3 */
+	if (netif_is_link_up(&gnetif)) {
+		/* When the netif is fully configured this function must be called */
+		netif_set_up(&gnetif);
+	} else {
+		/* When the netif link is down this function must be called */
+		netif_set_down(&gnetif);
+	}
 
-/* USER CODE END 3 */
+	/* USER CODE BEGIN 3 */
+
+	/* USER CODE END 3 */
 }
 
 #ifdef USE_OBSOLETE_USER_CODE_SECTION_4
