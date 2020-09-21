@@ -64,7 +64,7 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  32;
+#define DEVICEID  11;
 #define FAN_ON_TEMP 35
 
 //#define LORA  1
@@ -621,9 +621,8 @@ bool Lora_Join(UART_HandleTypeDef *huart) {
 char lora_send_msg[128];
 char lora_send_payload[128];
 uint32_t len;
-bool lora_send_result;
 struct lora_packet_t lora_packet_t;
-bool Lora_Send(UART_HandleTypeDef *huart) {
+void Lora_Send(UART_HandleTypeDef *huart) {
 
 	len = sprintf((char*) lora_send_msg, "at+send=lora:10:");
 
@@ -669,7 +668,7 @@ bool Lora_Send(UART_HandleTypeDef *huart) {
 	lora_packet_t.fext_stat = fext_stat;
 
 	printf(
-			"SEND LoRa Msg : {\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr_x\":%f,\"vibr_y\":%f,\"vibr_z\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}\r\n",
+			"#### SEND LoRa Msg : {\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr_x\":%f,\"vibr_y\":%f,\"vibr_z\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}\r\n",
 			lora_packet_t.device_id,
 			lora_packet_t.temp, //
 			lora_packet_t.vocs, //
@@ -690,30 +689,15 @@ bool Lora_Send(UART_HandleTypeDef *huart) {
 //printf("%s",lora_send_msg, sizeof(struct lora_packet_t));
 	Lora_Buf_Clear();
 	Lora_Cmd_Send(huart, lora_send_msg);
-	osDelay(500);
-
-	lora_send_result = false;
-	for (uint8_t wait_cnt = 0; wait_cnt < 15; wait_cnt++) { //
+	//osDelay(500);
+	for (uint8_t wait_cnt = 0; wait_cnt < 60; wait_cnt++) { // wait 1 minute
 		osDelay(1000);
-		//Print_Lora_Buf();
-
-		if (Lora_Str_Find("OK")) {
-			if (Lora_Str_Find("at+recv")) {
-				vibr = 0;
-				lora_send_result = true;
-				break;
-			}
-		} else if (Lora_Str_Find("ERROR")) {
-			lora_send_result = false;
+		Print_Lora_Buf();
+		if (Lora_Str_Find("OK") || Lora_Str_Find("ERROR")) {
 			break;
 		}
 
-		/*else if (Lora_Str_Find("ERROR: RUI_LORA_STATUS_NO_NETWORK_JOINED 86")) { // JOIN
-		 state = false;
-		 break;
-		 }*/
 	}
-	return lora_send_result;
 }
 
 void StartI2CTask(void const *argument) {
@@ -1063,7 +1047,7 @@ void startUdpSendTask(void const *argument) {
 			//netconn_write(conn, send_buf, sizeof(send_buf), NETCONN_NOFLAG);
 
 		}
-		osDelay(2000);
+		osDelay(5000);
 
 	}
 }
@@ -1076,16 +1060,14 @@ void startLoRaSendTask(void const *argument) {
 		if (lora_init) { // lora_init
 			state = Lora_Status(&huart1);
 			if (state) {
-				if (!Lora_Send(&huart1)) { // if send resulit false , osDelay(10000) step pass , keep send lora run  imdiately
-					continue;
-				}
+				Lora_Send(&huart1);
 			} else { // JOIN
 				state = Lora_Join(&huart1);
 				if (state == true)
 					printf("Lora JOIN Success!!\r\n");
 			}
 		}
-		osDelay(10000);
+		osDelay(1000);
 	}
 }
 
@@ -1765,8 +1747,11 @@ void StartDefaultTask(void const *argument) {
 	MX_LWIP_Init();
 	/* USER CODE BEGIN 5 */
 
-	device_id = DEVICEID
-	;
+	device_id = DEVICEID;
+
+	printf("### DEVICE_ID : %d ### \r\n",device_id);
+
+
 	// init status led blink start
 	osThreadDef(led_blink_task, startLedBlinkTask, osPriorityNormal, 0,
 			configMINIMAL_STACK_SIZE);
