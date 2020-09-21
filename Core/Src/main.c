@@ -64,7 +64,7 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  1;
+#define DEVICEID  2;
 #define FAN_ON_TEMP 35
 
 //#define LORA  1
@@ -695,6 +695,8 @@ void Lora_Send(UART_HandleTypeDef *huart) {
 			break;
 		}
 	}
+
+	vibr = 0;
 }
 
 void StartI2CTask(void const *argument) {
