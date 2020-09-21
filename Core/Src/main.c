@@ -48,7 +48,7 @@ struct time_packet {
 #pragma pack(1)
 struct lora_packet_t {
 	uint32_t device_id;
-	uint8_t temp;
+	float temp;
 	float vocs;
 	float smoke;
 	float vibr_x;
@@ -64,7 +64,7 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  11;
+#define DEVICEID  1;
 #define FAN_ON_TEMP 35
 
 //#define LORA  1
@@ -235,7 +235,7 @@ void collectionTask(void const *argument) {
 	uint8_t fire1 = HAL_GPIO_ReadPin(GPIOD, FIRE1_Pin); // fire up
 
 	fext_stat = fext_no << 1 | fext_nc;
-	fire = fire0 << 1 | fire1;
+	fire = fire1 << 1 | fire0;
 
 	//i2c
 	HAL_StatusTypeDef ret;
@@ -253,16 +253,9 @@ void collectionTask(void const *argument) {
 		// ---------------------- START ADC ----------------------
 		osDelay(1000);
 
-		printf("========== ADC ==========\r\n");
-		printf("       ADC    V         Value\r\n");
+		//printf("========== ADC ==========\r\n");
+		//printf("       ADC    V         Value\r\n");
 
-		// temp , PB1 , TEMP_A
-//		HAL_ADC_Start(&hadc1);
-//		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//		adc = HAL_ADC_GetValue(&hadc1);
-//		V = adc * (3.3f / 4096.0f);
-//		temp = 0x10;
-//		printf("TEMP : %d , %f, %f\r\n", adc, temp);
 
 		// co , PC2 , SMOKE_A
 		HAL_ADC_Start(&hadc2);
@@ -283,7 +276,7 @@ void collectionTask(void const *argument) {
 			co = 0;
 		}
 
-		printf("CO  : %d , %f, %f PPM\r\n", adc, V, co);
+		//printf("CO  : %d , %f, %f PPM\r\n", adc, V, co);
 
 		// voc , PF4 , VOC_A
 		HAL_ADC_Start(&hadc3);
@@ -313,15 +306,15 @@ void collectionTask(void const *argument) {
 		//toluene = (-9.234) + (5.249 * V) + ((-0.557)* pow(V, 2));
 
 		//printf("VOCS  : %d , %fV\r\n", adc, V);
-		printf("TOL  : %d , %f, %fppm \r\n", adc, V, toluene);
-		printf("FOR  : %d , %f, %fppm \r\n", adc, V, formaldehyde);
-		printf("BEZ  : %d , %f, %fppm \r\n", adc, V, benzene);
+		//printf("TOL  : %d , %f, %fppm \r\n", adc, toluene);
+		//printf("FOR  : %d , %f, %fppm \r\n", adc, V, formaldehyde);
+		//printf("BEZ  : %d , %f, %fppm \r\n", adc, V, benzene);
 
 		vocs = formaldehyde;
 		// ---------------------- END ADC ----------------------
 
 		// ---------------------- START I2C ----------------------
-		printf("========== I2C ==========\r\n");
+		//printf("========== I2C ==========\r\n");
 
 		ret = HAL_I2C_Master_Transmit(&hi2c1, 0x90, send_buf, 1, HAL_MAX_DELAY);
 		if (ret != HAL_OK) {
@@ -353,12 +346,12 @@ void collectionTask(void const *argument) {
 				}
 
 				temp = real_value;
-				printf("temp : %f\r\n", temp);
+				//printf("temp : %f\r\n", temp);
 			}
 		}
 
 		// ---------------------- START GPIO ----------------------
-		printf("========== GPIO ==========\r\n");
+		//printf("========== GPIO ==========\r\n");
 
 		// get Fire extinguisher status
 		// 0 ->1 : GAS EMPTY , 1 -> 0 : WORKING or NOT CONNECT
@@ -369,13 +362,15 @@ void collectionTask(void const *argument) {
 		fire1 = HAL_GPIO_ReadPin(GPIOD, FIRE1_Pin); // fire up
 
 		fext_stat = fext_no << 1 | fext_nc;
-		fire = fire0 << 1 | fire1;
+		fire = fire1 << 1 | fire0;
 
-		printf("fext_stat : %d \r\n", fext_stat);
-		printf("fire : %d \r\n", fire);
+		//printf(" FIRE0 %d\r\n",fire0 );
+		//printf(" FIRE1 %d\r\n",fire1 );
+		//printf("fext_stat : %d \r\n", fext_stat);
+		//printf("fire : %d \r\n", fire);
 
 		fan_stat = HAL_GPIO_ReadPin(GPIOG, FAN_Pin);
-		printf("fan_stat : %d\r\n", fan_stat);
+		//printf("fan_stat : %d\r\n", fan_stat);
 
 
 		// control fan
@@ -384,6 +379,9 @@ void collectionTask(void const *argument) {
 		}else if(temp < FAN_ON_TEMP && fan_stat == 1){
 			HAL_GPIO_WritePin(GPIOG, FAN_Pin ,GPIO_PIN_RESET);
 		}
+
+
+		//HAL_GPIO_TogglePin(GPIOG, FAN_Pin);
 
 		// ---------------------- END GPIO ----------------------
 		/* Read the accel x, y, z data */
@@ -656,7 +654,7 @@ void Lora_Send(UART_HandleTypeDef *huart) {
 //	uint8_t i;
 
 	lora_packet_t.device_id = device_id;
-	lora_packet_t.temp = (uint8_t) temp;
+	lora_packet_t.temp = temp;
 	lora_packet_t.vocs = vocs;
 	lora_packet_t.smoke = co;
 	lora_packet_t.vibr_x = vibr_x;
@@ -696,7 +694,6 @@ void Lora_Send(UART_HandleTypeDef *huart) {
 		if (Lora_Str_Find("OK") || Lora_Str_Find("ERROR")) {
 			break;
 		}
-
 	}
 }
 
