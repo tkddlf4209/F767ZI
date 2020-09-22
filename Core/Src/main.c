@@ -47,13 +47,10 @@ struct time_packet {
 
 #pragma pack(1)
 struct lora_packet_t {
-	uint32_t device_id;
+	uint8_t device_id;
 	float temp;
 	float vocs;
 	float smoke;
-	float vibr_x;
-	float vibr_y;
-	float vibr_z;
 	float vibr;
 	uint8_t fire;
 	uint8_t fan_stat;
@@ -137,20 +134,27 @@ float vibr_z;
 float vibr;
 float temp;
 float co;
+float vocs;
 float formaldehyde;
 float toluene;
 float benzene;
-float vocs;
 uint8_t fire;
 uint8_t debug;
 uint8_t fext_stat;
 uint8_t fan_stat;
 uint8_t i;
 
+
+
+float c_vibr;
+float c_temp;
+float c_co;
+float c_vocs;
+
 float vibr_abs_new;
 float vibr_abs_old;
 
-uint32_t device_id;
+uint8_t device_id;
 char *device_eui;
 
 uint8_t LORA;
@@ -190,6 +194,14 @@ int __io_getchar() {
 	uint8_t ch8;
 	HAL_UART_Receive(&huart3, &ch8, 1, HAL_MAX_DELAY);
 	return 0;
+}
+
+void reset(){
+	vibr = c_vibr;
+	temp = c_temp;
+	co = c_co;
+	vocs = 0;
+
 }
 
 void print_ip(unsigned int ip, unsigned int netmask, unsigned int gw_ip) {
@@ -251,7 +263,7 @@ void collectionTask(void const *argument) {
 
 	while (1) {
 		// ---------------------- START ADC ----------------------
-		osDelay(1000);
+		osDelay(200);
 
 		//printf("========== ADC ==========\r\n");
 		//printf("       ADC    V         Value\r\n");
@@ -268,13 +280,15 @@ void collectionTask(void const *argument) {
 
 		if (V > 1.0 && co_tmp > 0) {
 			if (co_tmp > 1000) {
-				co = 1000;
+				c_co = 1000;
 			} else {
-				co = co_tmp;
+				c_co = co_tmp;
 			}
 		} else {
-			co = 0;
+			c_co = 0;
 		}
+
+		co  = fmaxf(co,c_co);
 
 		//printf("CO  : %d , %f, %f PPM\r\n", adc, V, co);
 
@@ -285,9 +299,8 @@ void collectionTask(void const *argument) {
 		V = adc * (3.3f / 4096.0f);
 		V = V * 5 / 3.3;
 
-		toluene = pow(10, (-5.237f) + 4.848f * (V) + (-0.857f) * pow(V, 2));
-		formaldehyde = pow(10,
-				(-5.905f) + 6.996f * (V) + (-1.327f) * pow(V, 2));
+		toluene =  pow(10, (-5.237f) + 4.848f * (V) + (-0.857f) * pow(V, 2));
+		formaldehyde = pow(10,(-5.905f) + 6.996f * (V) + (-1.327f) * pow(V, 2));
 		benzene = pow(10, (-11.207f) + 14.718f * (V) + (-3.829f) * pow(V, 2));
 
 		if (V > 2.62) {
@@ -309,8 +322,8 @@ void collectionTask(void const *argument) {
 		//printf("TOL  : %d , %f, %fppm \r\n", adc, toluene);
 		//printf("FOR  : %d , %f, %fppm \r\n", adc, V, formaldehyde);
 		//printf("BEZ  : %d , %f, %fppm \r\n", adc, V, benzene);
-
-		vocs = formaldehyde;
+		c_vocs = formaldehyde;
+		vocs = fmaxf(vocs,c_vocs);
 		// ---------------------- END ADC ----------------------
 
 		// ---------------------- START I2C ----------------------
@@ -344,8 +357,8 @@ void collectionTask(void const *argument) {
 					real_value = (float) refactored_value
 							* LM75A_DEGREES_RESOLUTION;
 				}
-
-				temp = real_value;
+				c_temp = real_value;
+				temp = fmaxf(temp,c_temp);
 				//printf("temp : %f\r\n", temp);
 			}
 		}
@@ -372,11 +385,12 @@ void collectionTask(void const *argument) {
 		fan_stat = HAL_GPIO_ReadPin(GPIOG, FAN_Pin);
 		//printf("fan_stat : %d\r\n", fan_stat);
 
-
 		// control fan
 		if(temp >= FAN_ON_TEMP && fan_stat == 0){
+			printf(" FAN ON \r\n");
 			HAL_GPIO_WritePin(GPIOG, FAN_Pin ,GPIO_PIN_SET);
 		}else if(temp < FAN_ON_TEMP && fan_stat == 1){
+			printf(" FAN OFF \r\n");
 			HAL_GPIO_WritePin(GPIOG, FAN_Pin ,GPIO_PIN_RESET);
 		}
 
@@ -657,21 +671,17 @@ void Lora_Send(UART_HandleTypeDef *huart) {
 	lora_packet_t.temp = temp;
 	lora_packet_t.vocs = vocs;
 	lora_packet_t.smoke = co;
-	lora_packet_t.vibr_x = vibr_x;
-	lora_packet_t.vibr_y = vibr_y;
-	lora_packet_t.vibr_z = vibr_z;
 	lora_packet_t.vibr = vibr;
 	lora_packet_t.fire = fire;
 	lora_packet_t.fan_stat = fan_stat;
 	lora_packet_t.fext_stat = fext_stat;
 
 	printf(
-			"#### SEND LoRa Msg : {\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr_x\":%f,\"vibr_y\":%f,\"vibr_z\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}\r\n",
+			"#### SEND LoRa Msg : {\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}\r\n",
 			lora_packet_t.device_id,
 			lora_packet_t.temp, //
 			lora_packet_t.vocs, //
-			lora_packet_t.smoke, lora_packet_t.vibr_x, lora_packet_t.vibr_y,
-			lora_packet_t.vibr_z, lora_packet_t.vibr, lora_packet_t.fire,
+			lora_packet_t.smoke, lora_packet_t.vibr, lora_packet_t.fire,
 			lora_packet_t.fan_stat, lora_packet_t.fext_stat);
 
 	for (uint8_t i = 0; i < sizeof(struct lora_packet_t); i++) {
@@ -695,8 +705,7 @@ void Lora_Send(UART_HandleTypeDef *huart) {
 			break;
 		}
 	}
-
-	vibr = 0;
+	reset();
 }
 
 void StartI2CTask(void const *argument) {
@@ -1026,11 +1035,11 @@ void startUdpSendTask(void const *argument) {
 
 			memset(send_buf, 0, sizeof(send_buf));
 			sprintf((char*) send_buf,
-					"{\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr_x\":%f,\"vibr_y\":%f,\"vibr_z\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}",
+					"{\"device_id\":%d,\"temp\":%f,\"vocs\":%f,\"smoke\":%f,\"vibr\":%f,\"fire\":%x,\"fan\":%x,\"fext_stat\":%x}",
 					device_id,
 					temp, // 0
 					vocs, // 0
-					co, vibr_x, vibr_y, vibr_z, vibr, fire, fan_stat,
+					co, vibr, fire, fan_stat,
 					fext_stat);
 			printf("Send UDP Msg : %s\r\n", send_buf);
 
@@ -1040,7 +1049,8 @@ void startUdpSendTask(void const *argument) {
 			netbuf_ref(netbuf, send_buf, strlen(send_buf));
 			netconn_send(conn, netbuf);
 
-			vibr = 0;
+			reset();
+
 
 			//TCP
 			//netconn_write(conn, send_buf, sizeof(send_buf), NETCONN_NOFLAG);
@@ -1596,8 +1606,7 @@ void initDeviceId(void) {
 	uint8_t sw3_4 = HAL_GPIO_ReadPin(GPIOE, SW3_4_Pin);
 
 	//device_id = sw3_4 << 3 | sw3_3 << 2 | sw3_2 << 1 | sw3_1;
-	device_id = DEVICEID
-	;
+	device_id = DEVICEID;
 	printf("DEVICE_ID : %d\r\n", device_id);
 }
 
@@ -1762,6 +1771,14 @@ void StartDefaultTask(void const *argument) {
 	//initDeviceId();
 	initBma456();
 
+
+	// sensor data collection task.
+	osThreadDef(collection_task, collectionTask, osPriorityNormal, 0,
+			configMINIMAL_STACK_SIZE);
+	collection_task = osThreadCreate(osThread(collection_task), NULL);
+
+	osDelay(1000);
+
 	if (LORA) {
 		printf("==== LORA start ==== \r\n");
 		initDeviceEui();
@@ -1782,10 +1799,6 @@ void StartDefaultTask(void const *argument) {
 		udp_send_task = osThreadCreate(osThread(udp_send_task), NULL);
 	}
 
-	// sensor data collection task.
-	osThreadDef(collection_task, collectionTask, osPriorityNormal, 0,
-			configMINIMAL_STACK_SIZE);
-	collection_task = osThreadCreate(osThread(collection_task), NULL);
 
 	//start i2c
 //	osThreadDef(i2c_task, StartI2CTask, osPriorityNormal, 0,
@@ -1835,7 +1848,8 @@ void StartDefaultTask(void const *argument) {
 
 				if (vibr_abs_old != 0) {
 					//printf("####### VIBR %f , %f , %f#######\r\n",vibr,DIFF_ABS(vibr_abs_new,vibr_abs_old), fmaxf(vibr,DIFF_ABS(vibr_abs_new,vibr_abs_old)));
-					vibr = fmaxf(vibr, DIFF_ABS(vibr_abs_new, vibr_abs_old));
+					c_vibr = DIFF_ABS(vibr_abs_new, vibr_abs_old);
+					vibr = fmaxf(vibr, c_vibr);
 				}
 
 //				if (vibr_abs
