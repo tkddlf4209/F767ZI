@@ -61,7 +61,7 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  2;
+#define DEVICEID  11;
 #define FAN_ON_TEMP 35
 
 //#define LORA  1
@@ -1056,7 +1056,7 @@ void startUdpSendTask(void const *argument) {
 			//netconn_write(conn, send_buf, sizeof(send_buf), NETCONN_NOFLAG);
 
 		}
-		osDelay(5000);
+		osDelay(2000);
 
 	}
 }
