@@ -61,7 +61,7 @@ struct lora_packet_t {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define DEVICEID  11;
+#define DEVICEID  31;
 #define FAN_ON_TEMP 35
 
 //#define LORA  1
@@ -507,7 +507,7 @@ void Print_Lora_Buf() {
 bool Lora_INIT(UART_HandleTypeDef *huart, char *cmd) {
 	Lora_Buf_Clear();
 	Lora_Cmd_Send(huart, cmd);
-	osDelay(2000);
+	osDelay(1500);
 
 	//check uart response
 	//Print_Lora_Buf();
@@ -607,7 +607,7 @@ bool Lora_Config(UART_HandleTypeDef *huart) {
 bool Lora_Status(UART_HandleTypeDef *huart) {
 	Lora_Buf_Clear();
 	Lora_Cmd_Send(huart, "at+get_config=lora:status\r\n");
-	osDelay(2000);
+	osDelay(1000);
 	//Print_Lora_Buf();
 	if (Lora_Str_Find("Joined Network:true")) {
 		//printf("LoRa Joined Network\r\n");
@@ -916,9 +916,9 @@ void initLoRa() {
 
 	printf("LORA RAK JOIN CHECK START!\r\n");
 
-	state = Lora_Status(&huart1);
+	//state = Lora_Status(&huart1);
 	while (1) {
-		printf("LORA RAK STATUS!\r\n");
+		printf("LORA RAK STATUS CHECK!\r\n");
 		state = Lora_Status(&huart1);
 		if (state) {
 			lora_init = true;
@@ -1780,7 +1780,7 @@ void StartDefaultTask(void const *argument) {
 	osDelay(1000);
 
 	if (LORA) {
-		printf("==== LORA start ==== \r\n");
+		printf("#######  start LORA ###### \r\n");
 		initDeviceEui();
 		initLoRa();
 		osThreadDef(lora_send_task, startLoRaSendTask, osPriorityNormal, 0,
@@ -1789,7 +1789,7 @@ void StartDefaultTask(void const *argument) {
 	}
 
 	if (UDP) {
-		printf("==== UDP start ==== \r\n");
+		printf("#######  start UDP ###### \r\n");
 		osThreadDef(tcp_task, StartClientTask, osPriorityNormal, 0,
 				configMINIMAL_STACK_SIZE);
 		tcp_task = osThreadCreate(osThread(tcp_task), NULL);
